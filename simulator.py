@@ -2,7 +2,6 @@ from agent import Agent, State
 from graph import Graph
 from interaction_model import InteractionModel
 from itertools import combinations
-from constants import *
 from concurrent.futures import ProcessPoolExecutor
 import copy
 import numpy as np
@@ -98,6 +97,26 @@ class Simulator:
             self.collect(tick)
             tick += 1
 
+
+    def set_lambda(self, new_lambda: float) -> None:
+        """
+        Update the spreading probability in the interaction model.
+
+        Args:
+            new_lambda (float): New value for the spreading probability.
+        """
+        self.interaction_model._lambda = new_lambda
+
+    def sel_alpha(self, new_alpha: float) -> None:
+        """
+        Update the stifling probability in the interaction model.
+
+        Args:
+            new_alpha (float): New value for the stifling probability.
+        """
+        self.interaction_model._alpha = new_alpha
+
+
     def reset(self) -> None:
         """
         Reset the simulation to its initial state.
@@ -113,6 +132,7 @@ class Simulator:
             else:
                 self.node_occupants[agent.position].append(agent)
 
+
     def _single_run(self) -> list:
         """
         Execute a single simulation run.
@@ -125,6 +145,7 @@ class Simulator:
         self.reset()
         self.run()
         return copy.deepcopy(self.stats)
+
 
     def run_monte_carlo(self, n_runs: int) -> list:
         """
