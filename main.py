@@ -15,7 +15,7 @@ def build_simulator(n: int) -> Simulator:
     # agents
     agents = [Agent(State.ignorant, position=random.randint(0, n-1)) for _ in range(n)]
 
-    # один spreader
+    # one spreader
     agents[0].state = State.spreader
 
     # node_occupants
@@ -35,8 +35,8 @@ def build_simulator(n: int) -> Simulator:
         rng=rng
     )
 
-def test_monte_carlo():
-    sim = build_simulator()
+def _monte_carlo():
+    sim = build_simulator(3)
 
     results = sim.run_monte_carlo(n_runs=5)
 
@@ -58,12 +58,13 @@ def init_phase_analyzer() -> PhaseAnalyzer:
     )
     return analyzer
 
-def test_critical_lambdas():
+def _critical_lambdas():
     analyzer = init_phase_analyzer()
+    analyzer.crit_finder = analyzer.find_param_crit  x
     results = analyzer.run(n_runs=10)
     print(results)
 
-def test_inflection_points():
+def _inflection_points():
     analyzer = init_phase_analyzer()
     analyzer.crit_finder = analyzer.find_inflection_point
     results = analyzer.run(n_runs=10)
