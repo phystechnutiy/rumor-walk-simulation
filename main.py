@@ -60,7 +60,7 @@ def init_phase_analyzer() -> PhaseAnalyzer:
 
 def _critical_lambdas():
     analyzer = init_phase_analyzer()
-    analyzer.crit_finder = analyzer.find_param_crit  x
+    analyzer.crit_finder = analyzer.find_param_crit
     results = analyzer.run(n_runs=10)
     print(results)
 
