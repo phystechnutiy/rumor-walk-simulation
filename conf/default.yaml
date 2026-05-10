@@ -1,12 +1,13 @@
 mode: monte_carlo
 n: 10
 p: 0.5
-lambda_: 0.3
-alpha: 0.3
+spread_prob: 0.3
+stifle_prob: 0.3
+cooperate_prob: 0.1
 seed: 0
 n_runs: 5
-lambda_start: 0.1
-lambda_step: 0.1
+param_start: 0.1
+param_step: 0.1
 sizes:
   - 10
   - 50

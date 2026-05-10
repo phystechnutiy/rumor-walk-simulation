@@ -9,9 +9,7 @@ from typing import Callable
 import hydra
 
 
-
-
-def build_simulator(n: int, rng: np.random.Generator, p: float, lamb: float, alpha: float) -> Simulator:
+def build_simulator(n: int, rng: np.random.Generator, p: float, spread_prob: float, stifle_prob: float, cooperate_prob: float) -> Simulator:
     # graph
     graph = ErdosRenyiGraph.generate(n, p, rng)
 
@@ -27,7 +25,7 @@ def build_simulator(n: int, rng: np.random.Generator, p: float, lamb: float, alp
         node_occupants[a.position].append(a)
 
     # interaction model
-    interaction_model = InteractionModel(_lambda=lamb, _alpha=alpha, rng=rng)
+    interaction_model = InteractionModel(spread_prob=spread_prob, stifle_prob=stifle_prob, cooperate_prob=cooperate_prob, rng=rng)
 
     return Simulator(
         agents=agents,
@@ -37,8 +35,8 @@ def build_simulator(n: int, rng: np.random.Generator, p: float, lamb: float, alp
         rng=rng
     )
 
-def monte_carlo(n: int, n_runs: int, rng: np.random.Generator, p: float, lamb: float, alpha: float) -> float:
-    sim = build_simulator(n, rng, p, lamb, alpha)
+def monte_carlo(n: int, n_runs: int, rng: np.random.Generator, p: float, spread_prob: float, stifle_prob: float, cooperate_prob: float) -> None:
+    sim = build_simulator(n, rng, p, spread_prob, stifle_prob, cooperate_prob)
 
     results = sim.run_monte_carlo(n_runs)
 
@@ -50,24 +48,24 @@ def monte_carlo(n: int, n_runs: int, rng: np.random.Generator, p: float, lamb: f
             print(row)
 
 
-def init_phase_analyzer(rng: np.random.Generator, p: float, lamb: float, alpha: float, lambda_start: float, lambda_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]) -> PhaseAnalyzer:
+def init_phase_analyzer(rng: np.random.Generator, p: float, spread_prob: float, stifle_prob: float, cooperate_prob: float, param_start: float, param_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]) -> PhaseAnalyzer:
     analyzer = PhaseAnalyzer(
-        lambda_start = lambda_start,
-        lambda_step = lambda_step,
+        lambda_start = param_start,
+        lambda_step = param_step,
         sizes = sizes,
-        simulator_factory = lambda n: build_simulator(n, rng, p, lamb, alpha),
+        simulator_factory = lambda n: build_simulator(n, rng, p, spread_prob, stifle_prob, cooperate_prob),
         crit_finder = crit_finder
     )
     return analyzer
 
-def critical_lambdas(n_runs: int, rng: np.random.Generator, p: float, lamb: float, alpha: float, lambda_start: float, lambda_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]):
-    analyzer = init_phase_analyzer(rng, p, lamb, alpha, lambda_start, lambda_step, sizes, crit_finder)
+def critical_lambdas(n_runs: int, rng: np.random.Generator, p: float, spread_prob: float, stifle_prob: float, cooperate_prob: float, param_start: float, param_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]) -> None:
+    analyzer = init_phase_analyzer(rng, p, spread_prob, stifle_prob, cooperate_prob, param_start, param_step, sizes, crit_finder)
     analyzer.crit_finder = analyzer.find_param_crit
     results = analyzer.run(n_runs)
     print(results)
 
-def inflection_points(n_runs: int, rng: np.random.Generator, p: float, lamb: float, alpha: float, lambda_start: float, lambda_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]):
-    analyzer = init_phase_analyzer(rng, p, lamb, alpha, lambda_start, lambda_step, sizes, crit_finder)
+def inflection_points(n_runs: int, rng: np.random.Generator, p: float, spread_prob: float, stifle_prob: float, cooperate_prob: float, param_start: float, param_step: float, sizes: list[int], crit_finder: Callable[[dict[float, float]], float]) -> None:
+    analyzer = init_phase_analyzer(rng, p, spread_prob, stifle_prob, cooperate_prob, param_start, param_step, sizes, crit_finder)
     analyzer.crit_finder = analyzer.find_inflection_point
     results = analyzer.run(n_runs)
     print(results)
@@ -75,13 +73,12 @@ def inflection_points(n_runs: int, rng: np.random.Generator, p: float, lamb: flo
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: SimulationConfig) -> None:
     rng = np.random.default_rng(seed=cfg.seed)
-
     if cfg.mode == "monte_carlo":
-        monte_carlo(n=cfg.n, n_runs=cfg.n_runs, rng=rng, p=cfg.p, lamb=cfg.lambda_, alpha=cfg.alpha)
+        monte_carlo(n=cfg.n, n_runs=cfg.n_runs, rng=rng, p=cfg.p, spread_prob=cfg.spread_prob, stifle_prob=cfg.stifle_prob, cooperate_prob=cfg.cooperate_prob)
     elif cfg.mode == "critical":
-        critical_lambdas(n_runs=cfg.n_runs, rng=rng, p=cfg.p, lamb=cfg.lambda_, alpha=cfg.alpha, lambda_start=cfg.lambda_start, lambda_step=cfg.lambda_step, sizes=cfg.sizes)
+        critical_lambdas(n_runs=cfg.n_runs, rng=rng, p=cfg.p, spread_prob=cfg.spread_prob, stifle_prob=cfg.stifle_prob, cooperate_prob=cfg.cooperate_prob, param_start=cfg.param_start, param_step=cfg.param_step, sizes=cfg.sizes)
     elif cfg.mode == "inflection":
-        inflection_points(n_runs=cfg.n_runs, rng=rng, p=cfg.p, lamb=cfg.lambda_, alpha=cfg.alpha, lambda_start=cfg.lambda_start, lambda_step=cfg.lambda_step, sizes=cfg.sizes)
+        inflection_points(n_runs=cfg.n_runs, rng=rng, p=cfg.p, spread_prob=cfg.spread_prob, stifle_prob=cfg.stifle_prob, cooperate_prob=cfg.cooperate_prob, param_start=cfg.param_start, param_step=cfg.param_step, sizes=cfg.sizes)
 
 if __name__ == "__main__":
     main()
