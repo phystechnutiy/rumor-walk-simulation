@@ -4,7 +4,8 @@ class State(Enum):
     """Represents the possible states of an agent in the rumor spreading model."""
     ignorant = auto()   
     spreader = auto()   
-    stifler = auto()  
+    stifler = auto()
+    cooperator = auto()
 
 
 class Agent:
