@@ -1,4 +1,5 @@
 from agent import State, Agent
+from typing import Callable
 import numpy as np
 
 class InteractionModel:
@@ -19,7 +20,7 @@ class InteractionModel:
         self._alpha = _alpha
         self.rng = rng
 
-        self.rules: dict[tuple[State, State], callable] = {
+        self.rules: dict[tuple[State, State], Callable[[Agent, Agent], None]] = {
             (State.spreader, State.ignorant): self.spreader_ignorant,
             (State.spreader, State.spreader): self.spreader_spreader,
             (State.spreader, State.stifler): self.spreader_stifler,

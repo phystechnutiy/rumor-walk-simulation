@@ -79,7 +79,11 @@ class Simulator:
                 self.interaction_model.interact(a, b)
 
         for agent in self.agents:
-            new_position = int(self.rng.choice(self.graph.get_neighbors(agent.position)))
+            neighbors = self.graph.get_neighbors(agent.position)
+            if neighbors:
+                new_position = int(self.rng.choice(neighbors))
+            else:
+                new_position=agent.position
             self.node_occupants[agent.position].remove(agent)
             agent.position = new_position
             if new_position not in self.node_occupants.keys():
@@ -105,17 +109,16 @@ class Simulator:
         Args:
             new_lambda (float): New value for the spreading probability.
         """
-        self.interaction_model._lambda = new_lambda
+        self.interaction_model.lambda_ = new_lambda
 
-    def sel_alpha(self, new_alpha: float) -> None:
+    def set_alpha(self, new_alpha: float) -> None:
         """
         Update the stifling probability in the interaction model.
 
         Args:
             new_alpha (float): New value for the stifling probability.
         """
-        self.interaction_model._alpha = new_alpha
-
+        self.interaction_model.alpha_ = new_alpha
 
     def reset(self) -> None:
         """
@@ -133,7 +136,7 @@ class Simulator:
                 self.node_occupants[agent.position].append(agent)
 
 
-    def _single_run(self) -> list:
+    def _single_run(self) -> list[float]:
         """
         Execute a single simulation run.
 
