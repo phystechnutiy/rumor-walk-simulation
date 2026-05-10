@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from itertools import combinations
-from agent import Agent
 import math as m
 import numpy as np
 

@@ -64,7 +64,7 @@ class PhaseAnalyzer:
             raise ValueError("No non-zero values in phase results.")
         return min(candidates)
 
-    def run(self, n_runs: int, ) -> dict[str, float]:
+    def run(self, n_runs: int) -> dict[str, float]:
         """
         Run phase transition analysis for all system sizes.
 

@@ -1,0 +1,9 @@
+defaults:
+  - default
+
+mode: critical
+lambda_start: 0.1
+lambda_step: 0.1
+sizes:
+  - 10
+  - 50
