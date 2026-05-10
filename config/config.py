@@ -14,6 +14,7 @@ class SimulationConfig:
     param_start: float = 0.1
     param_step: float = 0.1
     sizes: list[int] = field(default_factory=lambda: [10, 50])
+    dashboard: bool = False
 
 cs = ConfigStore.instance()
 cs.store(name="config", node=SimulationConfig)
