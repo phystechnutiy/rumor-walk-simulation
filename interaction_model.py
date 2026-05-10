@@ -14,7 +14,7 @@ class InteractionModel:
         Args:
             spread_prob (float): Probability that a spreader converts an ignorant.
             stifle_prob (float): Probability that a spreader becomes a stifler.
-            cooperate_prob (float): Probability that a spreader becomes a stifler.
+            cooperate_prob (float): Probability that an ignorant becomes a cooperator.
             rng (np.random.Generator): Random number generator.
         """
         self._spread_prob = spread_prob
@@ -110,7 +110,7 @@ class InteractionModel:
 
     def spreader_ignorant(self, spreader: Agent, ignorant: Agent) -> None:
         """
-        A spreader may convert an ignorant into a spreader.
+        A spreader may convert an ignorant into a spreader or cooperator.
         """
         roll = self.rng.random()
         if roll < self._spread_prob:
@@ -141,7 +141,7 @@ class InteractionModel:
 
     def ignorant_cooperator(self, ignorant: Agent, cooperator: Agent) -> None:
         """
-        A ignorant may become a stifler after interacting with a cooperator.
+        An ignorant may become a cooperator after interacting with a cooperator.
         """
         if self.rng.random() < self.cooperate_prob:
             ignorant.state = State.cooperator
