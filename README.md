@@ -24,10 +24,10 @@ ignorant  →  spreader  →  stifler
            cooperator
 ```
 
-- **ignorant** — не знает слух
-- **spreader** — активно распространяет слух
-- **stifler** — знает слух, но больше не распространяет
-- **cooperator** — знает слух, не распространяет и снижает вероятность заражения ignorant
+- **ignorant** - не знает слух
+- **spreader** - активно распространяет слух
+- **stifler** - знает слух, но больше не распространяет
+- **cooperator** - знает слух, не распространяет и снижает вероятность заражения ignorant
 
 ## Параметры модели
 
@@ -45,16 +45,37 @@ ignorant  →  spreader  →  stifler
 | `sizes` | Размеры сетей для фазового анализа | `[10, 50]` |
 | `dashboard` | Запустить визуализацию | `false` |
 
+## Реализованные фичи
+
+### Модель cooperator
+Расширение классической модели Maki-Thompson новым состоянием агента. Cooperator — агент, который знает слух, не распространяет его сам и при контакте с ignorant может переводить его напрямую в cooperator, минуя стадию spreader. Это позволяет моделировать «иммунизацию» — сценарии, когда часть общества сознательно блокирует распространение слуха.
+
+### Параллельный Monte-Carlo
+`Simulator.run_monte_carlo(n_runs)` запускает независимые прогоны через `ProcessPoolExecutor`, используя все доступные ядра процессора. Каждый прогон получает свой `np.random.default_rng()` без seed, что гарантирует статистическую независимость выборок.
+
+### Фазовый анализ
+`PhaseAnalyzer` перебирает значения `spread_prob` от `param_start` с шагом `param_step` и для каждого значения запускает Monte-Carlo симуляцию. Реализованы два метода нахождения критической точки:
+- `find_param_crit` - первое ненулевое значение финального охвата
+- `find_inflection_point` - точка максимального прироста охвата (точка перегиба кривой)
+
+### Live Dashboard
+Интерактивная анимация на Plotly Dash: граф с агентами, раскрашенными по состоянию, кнопка Play и слайдер по тикам. Позволяет наблюдать движение агентов и распространение слуха в реальном времени.
+
+### Конфигурация через Hydra
+Все параметры симуляции управляются через `conf/config.yaml` и могут быть переопределены из командной строки без изменения кода.
+
 ## Зависимости
 
 | Библиотека | Версия | Использование |
-|---|---|---|
+|---|-------|---|
 | `numpy` | 2.4.4 | Генератор случайных чисел |
 | `plotly` | 6.7.0 | Визуализация |
 | `dash` | 4.1.0 | Интерактивный дашборд |
 | `networkx` | 3.6.1 | Layout графа |
-| `hydra-core` | — | CLI и конфигурация |
+| `hydra-core` | 1.3.2 | CLI и конфигурация |
+| `matplotlib` | 3.10.9 | Графики профилирования |
 | `pytest` | 9.0.3 | Тестирование |
+| `pytest-cov` | 7.1.0 | Покрытие тестами |
 
 ## Установка
 
@@ -130,6 +151,71 @@ python3 main.py mode=monte_carlo seed=42
 | 🔴 Красный | spreader |
 | ⚫ Серый | stifler |
 | 🟢 Зелёный | cooperator |
+
+## Тестирование
+
+Тесты находятся в папке `tests/` и покрывают все модули проекта.
+
+### Запуск тестов
+
+```bash
+# запустить все тесты
+pytest tests/
+
+# с отчётом о покрытии в консоль
+pytest --cov=. --cov-report=term-missing tests/
+
+# с HTML-отчётом (открыть htmlcov/index.html)
+pytest --cov=. --cov-report=html tests/
+```
+
+### Покрытие
+
+| Модуль | Покрытие |
+|---|---|
+| `agent.py` | 100% |
+| `interaction_model.py` | 100% |
+| `phase_analyzer.py` | 100% |
+| `dashboard.py` | 100% |
+| `graph.py` | 97% |
+| `simulator.py` | 88% |
+| `main.py` | 85% |
+| **Итого** | **98%** |
+
+Непокрытые строки в `main.py` — декоратор `@hydra.main` и блок `if __name__ == "__main__"`: тестирование entry point не является стандартной практикой. Непокрытые строки в `simulator.py` — внутренности `ProcessPoolExecutor`, которые выполняются в subprocess и не трассируются coverage.
+
+### Структура тестов
+
+```
+tests/
+├── test_agent.py            # State, Agent.__init__, сеттеры state/position
+├── test_graph.py            # Graph, add_node/edge, get_neighbors, ErdosRenyiGraph
+├── test_interaction_model.py # все 5 правил взаимодействия, сеттеры вероятностей, interact()
+├── test_simulator.py        # collect, step, run, reset, set_spread_prob, _single_run
+├── test_phase_analyzer.py   # compute_final_reach, find_param_crit, find_inflection_point, run
+├── test_dashboard.py        # _build_layout, _get_agent_positions, _build_frame, COLOR_MAP
+└── test_main.py             # build_simulator, monte_carlo, init_phase_analyzer, critical_lambdas
+```
+
+## Профилирование
+
+Профилирование реализовано в ноутбуке `profiling.ipynb`. Для запуска:
+
+```bash
+pip install jupyter
+jupyter notebook profiling.ipynb
+```
+
+### Что профилируется
+
+- `Simulator.step()` - 50 вызовов подряд на сети из 20 агентов
+- `Simulator.run()` - полный прогон на сети из 100 агентов
+- `Simulator.run_monte_carlo(10)` - 10 параллельных прогонов на сети из 50 агентов
+- Масштабируемость `run()` при n = 10, 20, 50, 100
+
+### Основные выводы
+
+Узкое место — `itertools.combinations()` внутри `step()`: перебор всех пар агентов на одном узле даёт сложность O(k²) по числу агентов на узле. При росте n время выполнения `run()` растёт быстрее линейного. Второй по весу вызов — `copy.deepcopy()` в `collect()` для сохранения снапшотов.
 
 ## Участники
 
