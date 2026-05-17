@@ -81,7 +81,7 @@ class PhaseAnalyzer:
             phase_results = {}
 
             while lamb < 1:
-                self.simulator.set_lambda(lamb)
+                self.simulator.set_spread_prob(lamb)
                 all_runs = self.simulator.run_monte_carlo(n_runs)
 
                 stiflers = [run[-1]["stifler"] for run in all_runs]
