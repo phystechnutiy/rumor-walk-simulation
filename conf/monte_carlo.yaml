@@ -1,0 +1,6 @@
+defaults:
+  - default
+
+mode: monte_carlo
+n: 10
+n_runs: 5

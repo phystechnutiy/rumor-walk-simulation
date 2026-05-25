@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from itertools import combinations
-from agent import Agent
 import math as m
 import numpy as np
 
@@ -38,7 +37,7 @@ class Graph(ABC):
             KeyError: If either node does not exist.
         """
         if node1 not in self.node_neighbors.keys() or node2 not in self.node_neighbors.keys():
-            raise KeyError
+            raise ValueError
         self.node_neighbors[node1].append(node2)
         self.node_neighbors[node2].append(node1)
 
@@ -70,7 +69,7 @@ class ErdosRenyiGraph(Graph):
             ErdosRenyiGraph: Generated graph instance.
         """
         if p < m.log(n, m.e) / n:
-            raise KeyError
+            raise ValueError
 
         instance = cls()
 

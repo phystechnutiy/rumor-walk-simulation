@@ -1,4 +1,9 @@
 import statistics
+from typing import Callable
+
+from pip._internal.resolution.resolvelib import candidates
+
+from simulator import Simulator
 
 
 class PhaseAnalyzer:
@@ -12,8 +17,8 @@ class PhaseAnalyzer:
         lambda_start: float,
         lambda_step: float,
         sizes: list[int],
-        simulator_factory,
-        crit_finder
+        simulator_factory: Callable[[int], Simulator],
+        crit_finder: Callable[[dict[float, float]], float],
     ):
         """
         Initialize the phase analyzer.
@@ -54,9 +59,12 @@ class PhaseAnalyzer:
         Returns:
             float: Estimated critical λ (first non-zero value).
         """
-        return min(x for x in phase_results if phase_results[x] > 0)
+        candidates = [x for x in phase_results if phase_results[x] > 0]
+        if not candidates:
+            raise ValueError("No non-zero values in phase results.")
+        return min(candidates)
 
-    def run(self, n_runs: int, ) -> dict[str, float]:
+    def run(self, n_runs: int) -> dict[str, float]:
         """
         Run phase transition analysis for all system sizes.
 
@@ -73,16 +81,16 @@ class PhaseAnalyzer:
             phase_results = {}
 
             while lamb < 1:
-                self.simulator.set_lambda(lamb)
+                self.simulator.set_spread_prob(lamb)
                 all_runs = self.simulator.run_monte_carlo(n_runs)
 
                 stiflers = [run[-1]["stifler"] for run in all_runs]
                 phase_results[lamb] = self.compute_final_reach(stiflers)
 
                 lamb += self.lambda_step
-
-            self.lambda_crit = self.crit_finder(phase_results)
-            result[size] = self.lambda_crit
+            if phase_results:
+                self.lambda_crit = self.crit_finder(phase_results)
+                result[size] = self.lambda_crit
 
         return result
 
