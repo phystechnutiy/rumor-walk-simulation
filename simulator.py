@@ -41,6 +41,13 @@ class Simulator:
         self._initial_agents = copy.deepcopy(agents)
         self._initial_node_occupants = copy.deepcopy(node_occupants)
 
+        self.initial_positions = {
+            id(agent): agent.position
+            for agent in agents
+        }
+        self.msd_history = []
+
+
     def collect(self, tick: int) -> None:
         """
         Collect statistics and snapshot at a given tick.
@@ -103,6 +110,7 @@ class Simulator:
         while any(agent.state == State.spreader for agent in self.agents):
             self.step()
             self.collect(tick)
+            self.update_diffusion()
             tick += 1
 
 
@@ -151,6 +159,8 @@ class Simulator:
         self.interaction_model.rng = self.rng
         self.reset()
         self.run()
+        D = self.diffusion_coefficient()
+        print(f"Diffusion coefficient D = {D:.5f}")
         return copy.deepcopy(self.stats)
 
 
@@ -167,3 +177,36 @@ class Simulator:
         with ProcessPoolExecutor() as executor:
             futures = [executor.submit(self._single_run) for _ in range(n_runs)]
             return [f.result() for f in futures]
+
+    def update_diffusion(self) -> None:
+        msd = 0.0
+
+        for agent in self.agents:
+            start = self.initial_positions[id(agent)]
+            current = agent.position
+
+            d = self.graph.shortest_path_length(
+                start,
+                current
+            )
+
+            msd += d * d
+
+        msd /= len(self.agents)
+
+        self.msd_history.append(msd)
+
+
+    def diffusion_coefficient(self) -> float:
+        if len(self.msd_history) < 3:
+            return 0.0
+
+        t = np.arange(len(self.msd_history))
+
+        slope = np.polyfit(
+            t,
+            self.msd_history,
+            1
+        )[0]
+
+        return slope / 2.0
