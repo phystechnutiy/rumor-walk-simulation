@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from itertools import combinations
 import math as m
 import numpy as np
+from collections import deque
 
 
 class Graph(ABC):
@@ -47,6 +48,30 @@ class Graph(ABC):
         pass
 
 
+    def shortest_path_length(self, start: int, finish: int) -> int:
+        if start == finish:
+            return 0
+
+        visited = {start}
+        queue = deque([(start, 0)])
+
+        while queue:
+            node, dist = queue.popleft()
+
+            for neighbor in self.node_neighbors[node]:
+                if neighbor == finish:
+                    return dist + 1
+
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append((neighbor, dist + 1))
+
+        raise ValueError("Graph is disconnected")
+
+
+
+
+
 class ErdosRenyiGraph(Graph):
     """
     Erdős–Rényi random graph model.
@@ -81,3 +106,4 @@ class ErdosRenyiGraph(Graph):
                 instance.add_edge(node1, node2)
 
         return instance
+

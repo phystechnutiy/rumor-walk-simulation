@@ -137,7 +137,22 @@ def main(cfg: SimulationConfig) -> None:
         critical_lambdas(n_runs=cfg.n_runs, rng=rng, p=cfg.p, spread_prob=cfg.spread_prob, stifle_prob=cfg.stifle_prob, cooperate_prob=cfg.cooperate_prob, param_start=cfg.param_start, param_step=cfg.param_step, sizes=cfg.sizes)
     elif cfg.mode == "inflection":
         inflection_points(n_runs=cfg.n_runs, rng=rng, p=cfg.p, spread_prob=cfg.spread_prob, stifle_prob=cfg.stifle_prob, cooperate_prob=cfg.cooperate_prob, param_start=cfg.param_start, param_step=cfg.param_step, sizes=cfg.sizes)
+    elif cfg.mode == "diffusion":
+        sim, _ = build_simulator(
+            cfg.n,
+            rng,
+            cfg.p,
+            cfg.spread_prob,
+            cfg.stifle_prob,
+            cfg.cooperate_prob
+        )
 
+        sim.run()
+
+        print(
+            f"Diffusion coefficient = "
+            f"{sim.diffusion_coefficient():.6f}"
+        )
 
 if __name__ == "__main__":
     main()
